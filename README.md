@@ -1,5 +1,5 @@
 # GMX Contracts
-Contracts for GMX.
+Contracts for Meridian.
 
 Docs at https://gmxio.gitbook.io/gmx/contracts.
 
