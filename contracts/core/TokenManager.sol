@@ -25,7 +25,7 @@ contract TokenManager is ReentrancyGuard {
     address public gov;
     address public admin;
     address public priceFeed;
-    address public glp;
+    address public alp;
     address public glpManagerContract;
     bool public isInitialized;
     bool private locked;
@@ -273,7 +273,7 @@ contract TokenManager is ReentrancyGuard {
     function getTokensPerAlp(address _token, bool _maximise) external view returns(uint256){
         // get AUM and totalSupply of ALP and calc price of aum
         uint256 aumInUsdg = glpManager.getAumInUsdg(_maximise);
-        uint256 glpSupply = IERC20(glp).totalSupply();
+        uint256 glpSupply = IERC20(alp).totalSupply();
         uint256 glpPrice = aumInUsdg.div(glpSupply);
         uint256 tokenPrice = IVaultPriceFeed(priceFeed).getPrice(_token, _maximise, true, _maximise);
         require(tokenPrice > 0,"TokenManager: Invalid token price");

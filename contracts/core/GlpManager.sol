@@ -27,7 +27,7 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
     IVault public vault;
     IShortsTracker public shortsTracker;
     address public override usdg;
-    address public glp;
+    address public alp;
 
     uint256 public override cooldownDuration;
     mapping (address => uint256) public override lastAddedAt;
@@ -63,7 +63,7 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
         gov = msg.sender;
         vault = IVault(_vault);
         usdg = _usdg;
-        glp = _glp;
+        alp = _glp;
         shortsTracker = IShortsTracker(_shortsTracker);
         cooldownDuration = _cooldownDuration;
     }
@@ -117,7 +117,7 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
 
     function getPrice(bool _maximise) external view returns (uint256) {
         uint256 aum = getAum(_maximise);
-        uint256 supply = IERC20(glp).totalSupply();
+        uint256 supply = IERC20(alp).totalSupply();
         return aum.mul(GLP_PRECISION).div(supply);
     }
 
@@ -211,16 +211,16 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
 
         // calculate aum before buyUSDG
         uint256 aumInUsdg = getAumInUsdg(true);
-        uint256 glpSupply = IERC20(glp).totalSupply();
+        uint256 glpSupply = IERC20(alp).totalSupply();
 
         IERC20(_token).safeTransferFrom(_fundingAccount, address(vault), _amount);
         uint256 usdgAmount = vault.buyUSDG(_token, address(this));
         require(usdgAmount >= _minUsdg, "GlpManager: insufficient USDG output");
 
         uint256 mintAmount = aumInUsdg == 0 ? usdgAmount : usdgAmount.mul(glpSupply).div(aumInUsdg);
-        require(mintAmount >= _minGlp, "GlpManager: insufficient GLP output");
+        require(mintAmount >= _minGlp, "GlpManager: insufficient ALP output");
 
-        IMintable(glp).mint(_account, mintAmount);
+        IMintable(alp).mint(_account, mintAmount);
 
         lastAddedAt[_account] = block.timestamp;
 
@@ -235,7 +235,7 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
 
         // calculate aum before sellUSDG
         uint256 aumInUsdg = getAumInUsdg(false);
-        uint256 glpSupply = IERC20(glp).totalSupply();
+        uint256 glpSupply = IERC20(alp).totalSupply();
 
         uint256 usdgAmount = _glpAmount.mul(aumInUsdg).div(glpSupply);
         uint256 usdgBalance = IERC20(usdg).balanceOf(address(this));
@@ -243,7 +243,7 @@ contract GlpManager is ReentrancyGuard, Governable, IGlpManager {
             IUSDG(usdg).mint(address(this), usdgAmount.sub(usdgBalance));
         }
 
-        IMintable(glp).burn(_account, _glpAmount);
+        IMintable(alp).burn(_account, _glpAmount);
 
         IERC20(usdg).transfer(address(vault), usdgAmount);
         uint256 amountOut = vault.sellUSDG(_tokenOut, _receiver);

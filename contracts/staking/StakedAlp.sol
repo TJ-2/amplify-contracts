@@ -10,7 +10,7 @@ import "../core/interfaces/IGlpManager.sol";
 import "./interfaces/IRewardTracker.sol";
 import "./interfaces/IRewardTracker.sol";
 
-// provide a way to transfer staked GLP tokens by unstaking from the sender
+// provide a way to transfer staked ALP tokens by unstaking from the sender
 // and staking for the receiver
 // tests in RewardRouterV2.js
 contract StakedGlp {
@@ -20,7 +20,7 @@ contract StakedGlp {
     string public constant symbol = "sGLP";
     uint8 public constant decimals = 18;
 
-    address public glp;
+    address public alp;
     IGlpManager public glpManager;
     address public stakedGlpTracker;
     address public feeGlpTracker;
@@ -35,7 +35,7 @@ contract StakedGlp {
         address _stakedGlpTracker,
         address _feeGlpTracker
     ) public {
-        glp = _glp;
+        alp = _glp;
         glpManager = _glpManager;
         stakedGlpTracker = _stakedGlpTracker;
         feeGlpTracker = _feeGlpTracker;
@@ -63,7 +63,7 @@ contract StakedGlp {
     }
 
     function balanceOf(address _account) external view returns (uint256) {
-        return IRewardTracker(feeGlpTracker).depositBalances(_account, glp);
+        return IRewardTracker(feeGlpTracker).depositBalances(_account, alp);
     }
 
     function totalSupply() external view returns (uint256) {
@@ -89,9 +89,9 @@ contract StakedGlp {
         );
 
         IRewardTracker(stakedGlpTracker).unstakeForAccount(_sender, feeGlpTracker, _amount, _sender);
-        IRewardTracker(feeGlpTracker).unstakeForAccount(_sender, glp, _amount, _sender);
+        IRewardTracker(feeGlpTracker).unstakeForAccount(_sender, alp, _amount, _sender);
 
-        IRewardTracker(feeGlpTracker).stakeForAccount(_sender, _recipient, glp, _amount);
+        IRewardTracker(feeGlpTracker).stakeForAccount(_sender, _recipient, alp, _amount);
         IRewardTracker(stakedGlpTracker).stakeForAccount(_recipient, _recipient, feeGlpTracker, _amount);
     }
 }

@@ -24,11 +24,11 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
 
     address public weth;
 
-    address public gmx;
+    address public amplify;
     address public esGmx;
     address public bnGmx;
 
-    address public glp; // GMX Liquidity Provider token
+    address public alp; // Amplify Liquidity Provider token
 
     address public stakedGmxTracker;
     address public bonusGmxTracker;
@@ -74,11 +74,11 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
 
         weth = _weth;
 
-        gmx = _gmx;
+        amplify = _gmx;
         esGmx = _esGmx;
         bnGmx = _bnGmx;
 
-        glp = _glp;
+        alp = _glp;
 
         stakedGmxTracker = _stakedGmxTracker;
         bonusGmxTracker = _bonusGmxTracker;
@@ -99,18 +99,18 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
     }
 
     function batchStakeGmxForAccount(address[] memory _accounts, uint256[] memory _amounts) external nonReentrant onlyGov {
-        address _gmx = gmx;
+        address _gmx = amplify;
         for (uint256 i = 0; i < _accounts.length; i++) {
             _stakeGmx(msg.sender, _accounts[i], _gmx, _amounts[i]);
         }
     }
 
     function stakeGmxForAccount(address _account, uint256 _amount) external nonReentrant onlyGov {
-        _stakeGmx(msg.sender, _account, gmx, _amount);
+        _stakeGmx(msg.sender, _account, amplify, _amount);
     }
 
     function stakeGmx(uint256 _amount) external nonReentrant {
-        _stakeGmx(msg.sender, msg.sender, gmx, _amount);
+        _stakeGmx(msg.sender, msg.sender, amplify, _amount);
     }
 
     function stakeEsGmx(uint256 _amount) external nonReentrant {
@@ -118,7 +118,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
     }
 
     function unstakeGmx(uint256 _amount) external nonReentrant {
-        _unstakeGmx(msg.sender, gmx, _amount, true);
+        _unstakeGmx(msg.sender, amplify, _amount, true);
     }
 
     function unstakeEsGmx(uint256 _amount) external nonReentrant {
@@ -130,7 +130,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
 
         address account = msg.sender;
         uint256 glpAmount = IGlpManager(glpManager).addLiquidityForAccount(account, account, _token, _amount, _minUsdg, _minGlp);
-        IRewardTracker(feeGlpTracker).stakeForAccount(account, account, glp, glpAmount);
+        IRewardTracker(feeGlpTracker).stakeForAccount(account, account, alp, glpAmount);
         IRewardTracker(stakedGlpTracker).stakeForAccount(account, account, feeGlpTracker, glpAmount);
 
         emit StakeGlp(account, glpAmount);
@@ -147,7 +147,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
         address account = msg.sender;
         uint256 glpAmount = IGlpManager(glpManager).addLiquidityForAccount(address(this), account, weth, msg.value, _minUsdg, _minGlp);
 
-        IRewardTracker(feeGlpTracker).stakeForAccount(account, account, glp, glpAmount);
+        IRewardTracker(feeGlpTracker).stakeForAccount(account, account, alp, glpAmount);
         IRewardTracker(stakedGlpTracker).stakeForAccount(account, account, feeGlpTracker, glpAmount);
 
         emit StakeGlp(account, glpAmount);
@@ -160,7 +160,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
 
         address account = msg.sender;
         IRewardTracker(stakedGlpTracker).unstakeForAccount(account, feeGlpTracker, _glpAmount, account);
-        IRewardTracker(feeGlpTracker).unstakeForAccount(account, glp, _glpAmount, account);
+        IRewardTracker(feeGlpTracker).unstakeForAccount(account, alp, _glpAmount, account);
         uint256 amountOut = IGlpManager(glpManager).removeLiquidityForAccount(account, _tokenOut, _glpAmount, _minOut, _receiver);
 
         emit UnstakeGlp(account, _glpAmount);
@@ -173,7 +173,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
 
         address account = msg.sender;
         IRewardTracker(stakedGlpTracker).unstakeForAccount(account, feeGlpTracker, _glpAmount, account);
-        IRewardTracker(feeGlpTracker).unstakeForAccount(account, glp, _glpAmount, account);
+        IRewardTracker(feeGlpTracker).unstakeForAccount(account, alp, _glpAmount, account);
         uint256 amountOut = IGlpManager(glpManager).removeLiquidityForAccount(account, weth, _glpAmount, _minOut, address(this));
 
         IWETH(weth).withdraw(amountOut);
@@ -236,7 +236,7 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
         }
 
         if (_shouldStakeGmx && gmxAmount > 0) {
-            _stakeGmx(account, account, gmx, gmxAmount);
+            _stakeGmx(account, account, amplify, gmxAmount);
         }
 
         uint256 esGmxAmount = 0;
@@ -298,10 +298,10 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
         _validateReceiver(receiver);
         _compound(_sender);
 
-        uint256 stakedGmx = IRewardTracker(stakedGmxTracker).depositBalances(_sender, gmx);
+        uint256 stakedGmx = IRewardTracker(stakedGmxTracker).depositBalances(_sender, amplify);
         if (stakedGmx > 0) {
-            _unstakeGmx(_sender, gmx, stakedGmx, false);
-            _stakeGmx(_sender, receiver, gmx, stakedGmx);
+            _unstakeGmx(_sender, amplify, stakedGmx, false);
+            _stakeGmx(_sender, receiver, amplify, stakedGmx);
         }
 
         uint256 stakedEsGmx = IRewardTracker(stakedGmxTracker).depositBalances(_sender, esGmx);
@@ -321,12 +321,12 @@ contract RewardRouterV2 is ReentrancyGuard, Governable {
             IERC20(esGmx).transferFrom(_sender, receiver, esGmxBalance);
         }
 
-        uint256 glpAmount = IRewardTracker(feeGlpTracker).depositBalances(_sender, glp);
+        uint256 glpAmount = IRewardTracker(feeGlpTracker).depositBalances(_sender, alp);
         if (glpAmount > 0) {
             IRewardTracker(stakedGlpTracker).unstakeForAccount(_sender, feeGlpTracker, glpAmount, _sender);
-            IRewardTracker(feeGlpTracker).unstakeForAccount(_sender, glp, glpAmount, _sender);
+            IRewardTracker(feeGlpTracker).unstakeForAccount(_sender, alp, glpAmount, _sender);
 
-            IRewardTracker(feeGlpTracker).stakeForAccount(_sender, receiver, glp, glpAmount);
+            IRewardTracker(feeGlpTracker).stakeForAccount(_sender, receiver, alp, glpAmount);
             IRewardTracker(stakedGlpTracker).stakeForAccount(receiver, receiver, feeGlpTracker, glpAmount);
         }
 
